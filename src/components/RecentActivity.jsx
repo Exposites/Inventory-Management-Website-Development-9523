@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
@@ -34,8 +33,17 @@ const RecentActivity = ({ items }) => {
   };
 
   const recentItems = items
-    .sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
+    .sort((a, b) => new Date(b.lastUpdated || b.added) - new Date(a.lastUpdated || a.added))
     .slice(0, 5);
+
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString();
+    } catch (error) {
+      return 'Recently';
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
@@ -60,20 +68,20 @@ const RecentActivity = ({ items }) => {
               transition={{ delay: index * 0.1 }}
               className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
             >
-              <div className={`p-2 rounded-full bg-gray-100 dark:bg-gray-700 ${getStatusColor(item.status)}`}>
-                <SafeIcon icon={getStatusIcon(item.status)} className="text-sm" />
+              <div className={`p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-blue-600`}>
+                <SafeIcon icon={FiPackage} className="text-sm" />
               </div>
               <div className="flex-1">
                 <h3 className="font-medium text-gray-900 dark:text-white">
-                  {item.name}
+                  {item.title || item.name}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {item.status} • Qty: {item.quantity}
+                  Added to collection
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {format(new Date(item.lastUpdated), 'MMM dd')}
+                  {formatDate(item.lastUpdated || item.added)}
                 </p>
               </div>
             </motion.div>

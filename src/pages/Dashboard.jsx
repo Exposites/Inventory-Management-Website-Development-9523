@@ -3,17 +3,17 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
-import { useInventory } from '../context/InventoryContext';
-import StatCard from '../components/StatCard';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db';
 import RecentActivity from '../components/RecentActivity';
 import QuickActions from '../components/QuickActions';
 
-const { FiPackage, FiDollarSign, FiAlertTriangle, FiXCircle } = FiIcons;
+const { FiFilm, FiUsers, FiCalendar, FiBarcode } = FiIcons;
 
 const Dashboard = () => {
-  const { getStats, items } = useInventory();
-  const stats = getStats();
-
+  // Get all movies from the database
+  const movies = useLiveQuery(() => db.movies.toArray());
+  
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -36,6 +36,20 @@ const Dashboard = () => {
     }
   };
 
+  const stats = {
+    totalMovies: movies?.length || 0,
+    totalActors: movies ? [...new Set(movies.flatMap(movie => movie.cast || []))].length : 0,
+    latestYear: movies && movies.length > 0 
+      ? Math.max(...movies.map(movie => {
+          if (movie.releaseDate) {
+            return new Date(movie.releaseDate).getFullYear();
+          }
+          return 0;
+        }).filter(year => year > 0))
+      : 0,
+    withBarcodes: movies?.filter(movie => movie.barcode).length || 0
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -46,10 +60,10 @@ const Dashboard = () => {
           className="mb-8"
         >
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Dashboard
+            DVD Collection Dashboard
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Welcome back! Here's an overview of your inventory.
+            Welcome back! Here's an overview of your movie collection.
           </p>
         </motion.div>
 
@@ -61,36 +75,75 @@ const Dashboard = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
         >
           <motion.div variants={itemVariants}>
-            <StatCard
-              title="Total Items"
-              value={stats.totalItems}
-              icon={FiPackage}
-              color="blue"
-            />
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Total Movies
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                    {stats.totalMovies}
+                  </p>
+                </div>
+                <div className="p-3 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                  <SafeIcon icon={FiFilm} className="text-xl" />
+                </div>
+              </div>
+            </div>
           </motion.div>
+
           <motion.div variants={itemVariants}>
-            <StatCard
-              title="Total Value"
-              value={`$${stats.totalValue.toLocaleString()}`}
-              icon={FiDollarSign}
-              color="green"
-            />
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Unique Actors
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                    {stats.totalActors}
+                  </p>
+                </div>
+                <div className="p-3 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">
+                  <SafeIcon icon={FiUsers} className="text-xl" />
+                </div>
+              </div>
+            </div>
           </motion.div>
+
           <motion.div variants={itemVariants}>
-            <StatCard
-              title="Low Stock"
-              value={stats.lowStockItems}
-              icon={FiAlertTriangle}
-              color="yellow"
-            />
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Latest Release
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                    {stats.latestYear || 'N/A'}
+                  </p>
+                </div>
+                <div className="p-3 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">
+                  <SafeIcon icon={FiCalendar} className="text-xl" />
+                </div>
+              </div>
+            </div>
           </motion.div>
+
           <motion.div variants={itemVariants}>
-            <StatCard
-              title="Out of Stock"
-              value={stats.outOfStockItems}
-              icon={FiXCircle}
-              color="red"
-            />
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    With Barcodes
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                    {stats.withBarcodes}
+                  </p>
+                </div>
+                <div className="p-3 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">
+                  <SafeIcon icon={FiBarcode} className="text-xl" />
+                </div>
+              </div>
+            </div>
           </motion.div>
         </motion.div>
 
@@ -103,7 +156,7 @@ const Dashboard = () => {
             transition={{ delay: 0.2 }}
             className="lg:col-span-2"
           >
-            <RecentActivity items={items} />
+            <RecentActivity items={movies || []} />
           </motion.div>
 
           {/* Quick Actions */}

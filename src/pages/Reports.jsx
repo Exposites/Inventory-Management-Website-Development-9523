@@ -1,122 +1,144 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db';
+import { generateMovieReport } from '../utils/reportGenerator';
 import SafeIcon from '../common/SafeIcon';
-import { useInventory } from '../context/InventoryContext';
-import CategoryChart from '../components/CategoryChart';
-import StockLevelChart from '../components/StockLevelChart';
-import ValueChart from '../components/ValueChart';
 
-const { FiBarChart3, FiPieChart, FiTrendingUp } = FiIcons;
+const { FiFileText, FiDownload, FiCheckCircle, FiAlertCircle } = FiIcons;
 
 const Reports = () => {
-  const { items, getCategoryStats } = useInventory();
-  const [activeTab, setActiveTab] = useState('overview');
-
-  const categoryStats = getCategoryStats();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [result, setResult] = useState(null);
   
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: FiBarChart3 },
-    { id: 'categories', label: 'Categories', icon: FiPieChart },
-    { id: 'trends', label: 'Trends', icon: FiTrendingUp }
-  ];
-
+  // Get the total count of movies
+  const movieCount = useLiveQuery(() => db.movies.count());
+  
+  const handleGenerateReport = async () => {
+    setIsGenerating(true);
+    setResult(null);
+    
+    try {
+      const generationResult = await generateMovieReport();
+      setResult(generationResult);
+    } catch (error) {
+      console.error('Error in report generation:', error);
+      setResult({
+        success: false,
+        error: error.message || 'Failed to generate report'
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Reports & Analytics
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Analyze your inventory data and track performance metrics.
-          </p>
-        </motion.div>
-
-        {/* Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8"
-        >
-          <div className="flex space-x-1 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <SafeIcon icon={tab.icon} className="text-sm" />
-                <span className="font-medium">{tab.label}</span>
-              </button>
-            ))}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="max-w-3xl mx-auto"
+    >
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          DVD Collection Reports
+        </h1>
+        <p className="text-gray-600 mt-1">
+          Generate and print reports of your DVD collection
+        </p>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="flex items-start space-x-4">
+          <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+            <SafeIcon icon={FiFileText} className="text-xl" />
           </div>
-        </motion.div>
-
-        {/* Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {activeTab === 'overview' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <StockLevelChart items={items} />
-              <ValueChart items={items} />
-            </div>
-          )}
           
-          {activeTab === 'categories' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <CategoryChart categoryStats={categoryStats} />
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Category Breakdown
-                </h3>
-                <div className="space-y-4">
-                  {Object.entries(categoryStats).map(([category, data]) => (
-                    <div key={category} className="flex justify-between items-center">
-                      <span className="text-gray-600 dark:text-gray-400">{category}</span>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {data.count} items
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          ${data.value.toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Alphabetical Collection Report
+            </h2>
+            
+            <p className="text-gray-600 mb-4">
+              Generate a printable PDF report of all DVDs in your collection, sorted alphabetically by title. The report includes title, release year, and main cast members.
+            </p>
+            
+            <div className="flex items-center text-sm text-gray-600 mb-4">
+              <span className="font-medium mr-2">Movies in collection:</span>
+              {movieCount !== undefined ? (
+                <span>{movieCount}</span>
+              ) : (
+                <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-indigo-500 border-t-transparent"></div>
+              )}
+            </div>
+            
+            {result && (
+              <div className={`p-3 rounded-md mb-4 ${
+                result.success
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
+              }`}>
+                <div className="flex items-center">
+                  <SafeIcon
+                    icon={result.success ? FiCheckCircle : FiAlertCircle}
+                    className="mr-2"
+                  />
+                  <span>
+                    {result.success
+                      ? 'Report generated successfully! Check your downloads.'
+                      : `Error: ${result.error}`}
+                  </span>
                 </div>
               </div>
-            </div>
-          )}
-          
-          {activeTab === 'trends' && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Inventory Trends
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Trend analysis features coming soon. This will include stock movement patterns,
-                seasonal trends, and predictive analytics.
+            )}
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleGenerateReport}
+              disabled={isGenerating || movieCount === 0}
+              className={`flex items-center px-4 py-2 rounded-md ${
+                movieCount === 0
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              }`}
+            >
+              {isGenerating ? (
+                <>
+                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <SafeIcon icon={FiDownload} className="mr-2" />
+                  Generate Report
+                </>
+              )}
+            </motion.button>
+            
+            {movieCount === 0 && (
+              <p className="text-sm text-red-500 mt-2">
+                Add movies to your collection before generating a report.
               </p>
-            </div>
-          )}
-        </motion.div>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+      
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="font-semibold text-gray-900 mb-2">
+          How to Print Your Report
+        </h3>
+        
+        <ol className="list-decimal list-inside text-gray-600 space-y-2">
+          <li>Generate the report using the button above</li>
+          <li>The report will download as a PDF file</li>
+          <li>Open the PDF file with any PDF viewer</li>
+          <li>Use the print function in your PDF viewer to print the report</li>
+          <li>You can also email the PDF to print it elsewhere</li>
+        </ol>
+      </div>
+    </motion.div>
   );
 };
 

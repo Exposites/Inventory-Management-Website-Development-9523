@@ -2,19 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#root {
-  width: 100%;
-  height: 100%;
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+.scan-region-highlight {
+  border-radius: 30px;
+  outline: rgba(0, 0, 0, 0.25) solid 50vmax;
+}
+
+.scan-region-highlight-svg {
+  stroke: rgba(99, 102, 241, 0.75);
+  stroke-width: 5;
+  stroke-dasharray: 35;
+  stroke-dashoffset: 0;
+  fill: none;
+  animation: dashdraw 2s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes dashdraw {
+  from {
+    stroke-dashoffset: 40;
+  }
+}
+
+.html5-qrcode-element {
+  @apply border-none text-indigo-600 bg-white py-2 px-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-sm font-medium;
+}
+
+#reader {
+  @apply w-full max-w-md mx-auto;
+}
+
+.html5-qrcode-button {
+  @apply mt-2 !important;
 }
